@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="report_axx_delivery_label" model="ir.actions.report">
+        <field name="name">Delivery Label</field>
+        <field name="model">stock.quant.package</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">inmatec_product_label.report_axx_delivery_label_template</field>
+        <field name="report_file">inmatec_product_label.report_axx_delivery_label_template</field>
+        <field name="paperformat_id" ref="axx_product_label_paperformat" />
+        <field name="print_report_name">'Delivery Label - %s' % (object.name)</field>
+        <field name="binding_model_id" ref="stock.model_stock_quant_package" />
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_axx_delivery_label_template">
+        <t t-call="web.html_container">
+            <t t-call="web.basic_layout">
+                <div class="page">
+                    <t t-foreach="docs" t-as="package">
+                        <t t-set="pickings" t-value="package.axx_move_line_ids.mapped('picking_id')" />
+                        <t t-foreach="pickings" t-as="picking">
+                            <t t-foreach="package.quant_ids" t-as="quant">
+                                <div class="row pt-3 border-dark border-top border-left border-right">
+                                    <div class="col-3">
+                                        <strong>Empfänger:</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <strong t-field="picking.partner_id" t-options='{"widget": "contact", "fields": contact_widget_fields, "no_marker": True}' />
+                                    </div>
+                                    <div class="col-3">
+                                        <img t-if="picking.company_id.logo" t-att-src="image_data_uri(picking.company_id.logo)" class="float-left" alt="Logo" width="140" />
+                                    </div>
+                                </div>
+                                <div class="row pt-5 border-dark border-left border-right">
+                                    <div class="col-3">
+                                        <strong>Bezeichnung:</strong>
+                                    </div>
+                                    <div class="col-9">
+                                        <strong t-field="quant.product_id" />
+                                    </div>
+                                </div>
+                                <div class="row pt-3 border-dark border-left border-right">
+                                    <div class="col-3">
+                                        <strong>Auftrags-Nr.:</strong>
+                                    </div>
+                                    <div class="col-3">
+                                        <strong t-out="picking.origin" />
+                                    </div>
+                                    <div class="col-3">
+                                        <strong>Chargen-Nr.:</strong>
+                                    </div>
+                                    <div class="col-3">
+                                        <strong t-field="quant.lot_id.name" />
+                                    </div>
+                                </div>
+                                <div class="row pt-1 border-dark border-left border-right">
+                                    <div class="col-3 offset-6">
+                                        <strong>Gewiht-netto:</strong>
+                                    </div>
+                                    <div class="col-3">
+                                        <strong t-field="quant.quantity" />
+                                        <strong t-field="quant.product_uom_id" />
+                                    </div>
+                                </div>
+                                <div class="row pt-1 border-dark border-left border-right">
+                                    <div class="col-3 offset-6">
+                                        <strong>Gewiht-brutto:</strong>
+                                    </div>
+                                    <div class="col-3">
+                                        <strong t-field="package.shipping_weight" />
+                                        <strong t-field="package.weight_uom_name" />
+                                    </div>
+                                </div>
+                                <div class="row pt-3 text-center border-dark border-left border-right border-bottom">
+                                    <div class="col-12 pt-3 border-top">
+                                        <strong t-field="picking.company_id" />
+                                        .
+                                        <strong t-field="picking.company_id.street" />
+                                        .
+                                        <strong t-field="picking.company_id.zip" />
+                                        <strong t-field="picking.company_id.city" />
+                                        <p>
+                                            Tel.:
+                                            <span t-field="picking.company_id.phone" />
+                                            . Fax:
+                                            <span t-field="picking.company_id.phone" />
+                                        </p>
+                                    </div>
+                                </div>
+                                <p style="page-break-before:always;"></p>
+                            </t>
+                        </t>
+                    </t>
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>

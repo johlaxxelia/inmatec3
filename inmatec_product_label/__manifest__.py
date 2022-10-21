@@ -30,6 +30,7 @@
 
         # reports
         'report/stock/axx_product_label_report.xml',
+        'report/stock/axx_delivery_label_report.xml',
 
         # Menus
     ],
