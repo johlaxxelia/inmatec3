@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="axx_product_label_paperformat" model="report.paperformat">
+        <field name="name">Product Label Sheet</field>
+        <field name="format">custom</field>
+        <field name="page_height">180</field>
+        <field name="page_width">210</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">10</field>
+        <field name="margin_bottom">10</field>
+        <field name="margin_left">10</field>
+        <field name="margin_right">10</field>
+        <field name="disable_shrinking" eval="True" />
+        <field name="dpi">96</field>
+    </record>
+
+    <record id="report_axx_product_label" model="ir.actions.report">
+        <field name="name">Product Label</field>
+        <field name="model">stock.picking</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">inmatec_product_label.report_axx_product_label_template</field>
+        <field name="report_file">inmatec_product_label.report_axx_product_label_template</field>
+        <field name="paperformat_id" ref="axx_product_label_paperformat" />
+        <field name="print_report_name">'Products Labels - %s' % (object.name)</field>
+        <field name="binding_model_id" eval="False" />
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_axx_product_label_template">
+        <t t-call="web.html_container">
+            <t t-call="web.basic_layout">
+                <div class="page">
+                    <t t-set="product_moves" t-value="env['stock.move.line'].browse(product_move_ids)" />
+                    <t t-foreach="product_moves" t-as="move">
+                        <t t-foreach="range(quantity_by_product[str(move.id)])" t-as="i">
+                            <div class="row pt-3 border-dark border-top border-left border-right">
+                                <div class="col-3">
+                                    <strong>Empfänger:</strong>
+                                </div>
+                                <div class="col-6">
+                                    <strong t-field="move.picking_partner_id" t-options='{"widget": "contact", "fields": contact_widget_fields, "no_marker": True}' />
+                                </div>
+                                <div class="col-3">
+                                    <img t-if="move.company_id.logo" t-att-src="image_data_uri(move.company_id.logo)" class="float-left" alt="Logo" width="140" />
+                                </div>
+                            </div>
+                            <div class="row pt-3 border-dark border-left border-right">
+                                <div class="col-3">
+                                    <strong>Bezeichnung:</strong>
+                                </div>
+                                <div class="col-9">
+                                    <strong t-field="move.product_id" />
+                                </div>
+                            </div>
+                            <div class="row pt-3 border-dark border-left border-right">
+                                <div class="col-3">
+                                    <strong>Auftrags-Nr.:</strong>
+                                </div>
+                                <div class="col-3">
+                                    <strong t-out="move.origin" />
+                                </div>
+                                <div class="col-3">
+                                    <strong>Gewiht-netto:</strong>
+                                </div>
+                                <div class="col-3">
+                                    <strong t-field="move.qty_done" />
+                                    <strong t-field="move.product_uom_id" />
+                                </div>
+                            </div>
+                            <div class="row pt-1 border-dark border-left border-right">
+                                <div class="col-3">
+                                    <strong>Artikel Nr.:</strong>
+                                </div>
+                                <div class="col-3">
+                                    <strong t-field="move.product_id.default_code" />
+                                </div>
+                            </div>
+                            <div class="row pt-1 border-dark border-left border-right">
+                                <div class="col-3">
+                                    <strong>Material-Nr.:</strong>
+                                </div>
+                                <div class="col-3">
+                                    <strong t-field="move.product_id.barcode" />
+                                </div>
+                                <div class="col-3">
+                                    <strong>Chargen-Nr.:</strong>
+                                </div>
+                                <div class="col-3">
+                                    <strong t-out="move.lot_id.name or move.lot_name" />
+                                </div>
+                            </div>
+                            <div class="row pt-3 border-dark border-left border-right">
+                                <t t-set="barcode_size" t-value="'width:83mm;height:33mm'" />
+                                <div class="col-6 pt-3 text-center border-top border-bottom">
+                                    <div t-out="move.product_id.barcode" t-options="{'widget': 'barcode', 'symbology': 'auto', 'img_style': barcode_size}" />
+                                    <span class="text-center" t-out="move.product_id.barcode" />
+                                </div>
+                                <div class="col-6 pt-3 text-center border-top border-bottom">
+                                    <t t-set="barcode" t-value="move.lot_id.name or move.lot_name" />
+                                    <div t-out="barcode" t-options="{'widget': 'barcode', 'symbology': 'auto', 'img_style': barcode_size}" />
+                                    <span class="text-center" t-out="barcode" />
+                                </div>
+                            </div>
+                            <div class="row pt-3 text-center border-dark border-left border-right border-bottom">
+                                <div class="col-12">
+                                    <strong t-field="move.company_id" />
+                                    .
+                                    <strong t-field="move.company_id.street" />
+                                    <br />
+                                    <strong t-field="move.company_id.zip" />
+                                    <strong t-field="move.company_id.city" />
+                                    <p>
+                                        Tel.:
+                                        <span t-field="move.company_id.phone" />
+                                        . Fax:
+                                        <span t-field="move.company_id.phone" />
+                                    </p>
+                                </div>
+                            </div>
+                            <p style="page-break-before:always;"></p>
+                        </t>
+                    </t>
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>
