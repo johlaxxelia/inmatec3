@@ -23,9 +23,9 @@ class AxxRevenueReport(models.Model):
     product_uom_qty = fields.Float('Qty Ordered', readonly=True)
     qty_to_deliver = fields.Float('Qty To Deliver', readonly=True)
     qty_delivered = fields.Float('Qty Delivered', readonly=True)
-    qty_to_invoice = fields.Float('Qty To Invoice', readonly=True)
+    qty_to_invoice = fields.Float('Qty', readonly=True)
     qty_invoiced = fields.Float('Qty Invoiced', readonly=True)
-    qty_to_revenue = fields.Float('Qty Invoiced', readonly=True)
+    qty_to_revenue = fields.Float('Qty to Revenue', readonly=True)
     partner_id = fields.Many2one('res.partner', 'Customer', readonly=True)
     company_id = fields.Many2one('res.company', 'Company', readonly=True)
     user_id = fields.Many2one('res.users', 'Salesperson', readonly=True)
@@ -57,7 +57,7 @@ class AxxRevenueReport(models.Model):
     campaign_id = fields.Many2one('utm.campaign', 'Campaign')
     medium_id = fields.Many2one('utm.medium', 'Medium')
     source_id = fields.Many2one('utm.source', 'Source')
-
+    expected_revenue = fields.Char('Expected Revenue', readonly=True)
     order_id = fields.Many2one('sale.order', 'Order #', readonly=True)
 
     def _select_sale(self, fields=None):
@@ -69,7 +69,7 @@ class AxxRevenueReport(models.Model):
             pt.uom_id AS product_uom,
             count(*) AS nbr,
             so.name AS name,
-            sp.date_done AS date,
+            sp.scheduled_date AS date,
             so.state AS state,
             so.partner_id AS partner_id,
             so.user_id AS user_id,
@@ -77,7 +77,7 @@ class AxxRevenueReport(models.Model):
             so.campaign_id AS campaign_id,
             so.medium_id AS medium_id,
             so.source_id AS source_id,
-            extract(epoch FROM avg(date_trunc('day', sp.date_done) - date_trunc('day', so.create_date))) / (24 * 60 * 60)::decimal (16, 2) AS delay,
+            extract(epoch FROM avg(date_trunc('day', sp.scheduled_date) - date_trunc('day', so.create_date))) / (24 * 60 * 60)::decimal (16, 2) AS delay,
             pt.categ_id AS categ_id,
             so.pricelist_id AS pricelist_id,
             so.analytic_account_id AS analytic_account_id,
@@ -99,7 +99,17 @@ class AxxRevenueReport(models.Model):
             SUM((sol.untaxed_amount_to_invoice * (CASE WHEN sp.date_done IS NULL THEN sm.product_uom_qty ELSE sml.qty_done END / (sol.product_uom_qty / u.factor * u2.factor))) / CASE COALESCE(so.currency_rate, 0) WHEN 0 THEN 1.0 ELSE so.currency_rate END) AS untaxed_amount_to_invoice,
             SUM((sol.untaxed_amount_invoiced * (CASE WHEN sp.date_done IS NULL THEN sm.product_uom_qty ELSE sml.qty_done END / (sol.product_uom_qty / u.factor * u2.factor))) / CASE COALESCE(so.currency_rate, 0) WHEN 0 THEN 1.0 ELSE so.currency_rate END) AS untaxed_amount_invoiced,
             SUM(p.weight * CASE WHEN sp.date_done IS NULL THEN sm.product_uom_qty ELSE sml.qty_done END) AS weight,
-            SUM(p.volume * CASE WHEN sp.date_done IS NULL THEN sm.product_uom_qty ELSE sml.qty_done END) AS volume
+            SUM(p.volume * CASE WHEN sp.date_done IS NULL THEN sm.product_uom_qty ELSE sml.qty_done END) AS volume,
+            (SELECT
+                'Expected Qty: ' || SUM(quantity) || ', Expected Revenue: ' || SUM(expected_revenue)
+            FROM
+                axx_crm_expected_revenue
+            WHERE
+                product_id = sm.product_id
+                AND sp.scheduled_date BETWEEN date_start
+                AND date_end
+                AND(partner_id = so.partner_id
+                    OR partner_id IS NULL)) AS expected_revenue
         """
 
         for field in fields.values():
@@ -130,7 +140,7 @@ class AxxRevenueReport(models.Model):
             pt.uom_id,
             pt.categ_id,
             so.name,
-            sp.date_done,
+            sp.scheduled_date,
             so.partner_id,
             so.user_id,
             so.state,
@@ -146,6 +156,7 @@ class AxxRevenueReport(models.Model):
             partner.industry_id,
             partner.commercial_partner_id,
             sol.discount,
+	        expected_revenue,
             so.id %s
         """ % (groupby)
         return groupby_
@@ -154,7 +165,7 @@ class AxxRevenueReport(models.Model):
         if not fields:
             fields = {}
         with_ = ("WITH %s" % with_clause) if with_clause else ""
-        return '%s (SELECT %s FROM %s WHERE spt.code == "outgoing" GROUP BY %s)' % \
+        return "%s (SELECT %s FROM %s WHERE spt.code = 'outgoing' GROUP BY %s)" % \
                (with_, self._select_sale(fields), self._from_sale(from_clause), self._group_by_sale(groupby))
 
     def init(self):

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_crm_lead_form_inherit" model="ir.ui.view">
+        <field name="name">view.crm.lead.form.inherit</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+        <field name="arch" type="xml">
+            <field name="company_id" position="after">
+                <field name="axx_product_id"/>
+                <field name="axx_qty"/>
+            </field>
+            <xpath expr="//notebook" position="inside">
+                <page string="Expected Revenue Plan" name="expected_revenue_plan">
+                    <field name="axx_expected_revenue_ids">
+                        <tree>
+                            <field name="product_id"/>
+                            <field name="quantity"/>
+                            <field name="date_start"/>
+                            <field name="date_end"/>
+                            <field name="expected_revenue"/>
+                            <field name="currency_id" invisible="1"/>
+                        </tree>
+                    </field>
+                </page>
+        </xpath>
+        </field>
+    </record>
+    
+</odoo>

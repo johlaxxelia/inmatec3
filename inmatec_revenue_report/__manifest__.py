@@ -19,19 +19,23 @@
         # ---------------------
         # Axxelia
         # ---------------------
-        'axx_predefined_text_blocks',
     ],
     # always loaded
     'data': [
         # data
 
-        # stock
+        # Security
+        'security/ir.model.access.csv',
+
+        # crm
+        'views/crm/crm_lead_views.xml',
 
         # base
 
         # account
 
         # reports
+        'views/reports/axx_revenue_report_views.xml',
 
         # wizards
 
