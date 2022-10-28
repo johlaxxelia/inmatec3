@@ -61,7 +61,7 @@
                                     <strong t-out="move.origin" />
                                 </div>
                                 <div class="col-3">
-                                    <strong>Gewiht-netto:</strong>
+                                    <strong>Gewicht-netto:</strong>
                                 </div>
                                 <div class="col-3">
                                     <strong t-field="move.qty_done" />
